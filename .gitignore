@@ -1,0 +1,32 @@
+# ── Claude Code 头脑风暴伴生目录(本地会话产物,不入库) ──
+.superpowers/
+
+# ── 鸿蒙 / DevEco Studio ──
+node_modules/
+oh_modules/
+build/
+.hvigor/
+.cxx/
+.clangd
+.clang-format
+.clang-tidy
+local.properties
+*.har
+*.hap
+*.hsp
+
+# ── 系统 ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 编辑器 ──
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*~
+
+# ── 日志 ──
+*.log
+npm-debug.log*

@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="day">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>极简小记 · 交互原型</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css">
+<style>
+/* ============================================================
+   极简小记 — 纸墨 (paper & ink)
+   暖米白纸面 / 墨黑文字 / 低饱和"颜料"标签色 / 楷体点缀
+   ============================================================ */
+
+:root{
+  --paper:      #F6F2EA;
+  --paper-2:    #EFE9DC;
+  --card:       #FFFDF9;
+  --ink:        #1C1A17;
+  --ink-2:      #554E44;
+  --ink-3:      #968D7F;
+  --line:       #E3DBCB;
+  --line-2:     #EDE7DA;
+  --accent:     #C2410C;
+
+  --study:      #3F5E8C;
+  --work:       #B4553A;
+  --life:       #5A7A52;
+
+  --p-high:     #C2410C;
+  --p-mid:      #C9A227;
+  --p-low:      #A79E8F;
+
+  --shadow-s:   0 1px 2px rgba(28,26,23,.05);
+  --shadow-m:   0 10px 28px -14px rgba(28,26,23,.30), 0 1px 2px rgba(28,26,23,.05);
+  --shadow-l:   0 44px 88px -44px rgba(28,26,23,.65);
+
+  --ease:       cubic-bezier(.2,.8,.2,1);
+  --spring:     cubic-bezier(.34,1.32,.44,1);
+}
+
+[data-theme="night"]{
+  --paper:      #141311;
+  --paper-2:    #1C1A17;
+  --card:       #201E1A;
+  --ink:        #EDE6D9;
+  --ink-2:      #B4AA9A;
+  --ink-3:      #7B7367;
+  --line:       #2F2C26;
+  --line-2:     #262420;
+  --accent:     #E0703A;
+
+  --study:      #7E9CCB;
+  --work:       #D9856A;
+  --life:       #8FAE85;
+
+  --p-high:     #E0703A;
+  --p-mid:      #D9B44A;
+  --p-low:      #6E675C;
+
+  --shadow-m:   0 10px 28px -14px rgba(0,0,0,.7), 0 1px 2px rgba(0,0,0,.4);
+  --shadow-l:   0 44px 88px -44px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html,body{height:100%}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  display:flex;align-items:center;justify-content:center;
+  padding:48px 32px;
+  transition:background .5s var(--ease), color .5s var(--ease);
+  overflow-x:hidden;
+}
+
+/* 纸面颗粒 */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.16;mix-blend-mode:multiply;
+}
+[data-theme="night"] body::before{mix-blend-mode:overlay;opacity:.09}
+
+/* ============================ 舞台 ============================ */
+
+.stage{
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  gap:72px;flex-wrap:wrap;
+}
+
+/* ---------- 左侧:桌面服务卡片 ---------- */
+
+.desk{width:340px;flex:none;animation:rise .8s var(--ease) both;animation-delay:.05s}
+
+.desk-scene{
+  position:relative;height:470px;border-radius:30px;overflow:hidden;padding:20px 18px;
+  background:
+    radial-gradient(120% 90% at 12% 6%,  rgba(255,214,170,.55) 0%, transparent 55%),
+    radial-gradient(100% 80% at 92% 22%, rgba(120,140,150,.45) 0%, transparent 58%),
+    radial-gradient(120% 100% at 50% 108%,rgba(60,48,40,.85)  0%, transparent 62%),
+    linear-gradient(168deg, #4B4238 0%, #322C25 48%, #211D18 100%);
+  box-shadow:var(--shadow-l), 0 0 0 1px rgba(255,255,255,.07) inset;
+}
+.desk-scene::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.30;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.desk-clock{position:relative;z-index:2;color:#F3EDE2;text-align:center;margin-top:6px}
+.desk-clock .t{font-size:52px;line-height:1;font-weight:200;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.desk-clock .d{font-size:12.5px;opacity:.62;margin-top:7px;letter-spacing:.14em}
+
+/* 服务卡片本体 */
+.widget{
+  position:relative;z-index:2;margin-top:22px;
+  background:rgba(252,249,243,.82);
+  backdrop-filter:blur(26px) saturate(160%);
+  -webkit-backdrop-filter:blur(26px) saturate(160%);
+  border-radius:22px;padding:14px 14px 10px;
+  box-shadow:0 18px 44px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.5) inset;
+}
+[data-theme="night"] .widget{background:rgba(28,26,23,.82);box-shadow:0 18px 44px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.09) inset}
+
+.widget-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;color:var(--ink)}
+.widget-title{font-size:13px;font-weight:600;letter-spacing:.02em}
+.widget-count{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.widget-count b{color:var(--accent);font-weight:700}
+
+.widget-list{list-style:none;display:flex;flex-direction:column;gap:2px}
+.witem{display:flex;align-items:center;gap:9px;padding:5px 4px;border-radius:9px;cursor:pointer;transition:background .2s var(--ease)}
+.witem:hover{background:rgba(128,118,100,.10)}
+.witem .wt{flex:1;font-size:12.5px;color:var(--ink);line-height:1.35;position:relative;transition:color .3s var(--ease)}
+.witem .wt::after{content:"";position:absolute;left:0;top:52%;height:1px;width:100%;background:currentColor;opacity:.5;transform:scaleX(0);transform-origin:left;transition:transform .34s var(--ease)}
+.witem.done .wt{color:var(--ink-3)}
+.witem.done .wt::after{transform:scaleX(1)}
+.witem .wdot{width:5px;height:5px;border-radius:50%;flex:none}
+.witem .wbox{color:var(--ink-3);display:flex;align-items:center}
+
+.widget-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(140,130,112,.20)}
+.wf-btn{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-2);background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 4px;border-radius:6px;transition:color .2s,background .2s}
+.wf-btn:hover{color:var(--accent);background:rgba(194,65,12,.08)}
+
+.desk-hint{
+  margin-top:18px;font-size:12.5px;line-height:1.75;color:var(--ink-2);
+  padding-left:14px;border-left:2px solid var(--accent);
+  animation:rise .8s var(--ease) both;animation-delay:.3s;
+}
+.desk-hint b{color:var(--ink);font-weight:600}
+
+/* ---------- 右侧:手机 ---------- */
+
+.phone{
+  position:relative;width:382px;height:790px;flex:none;
+  border-radius:46px;padding:11px;
+  background:linear-gradient(158deg,#443E36 0%,#252220 55%,#1A1815 100%);
+  box-shadow:var(--shadow-l), 0 0 0 1px rgba(255,255,255,.09) inset;
+  animation:rise .9s var(--ease) both;animation-delay:.15s;
+}
+
+/* 侧键 */
+.phone::before,.phone::after{content:"";position:absolute;width:3px;border-radius:3px;background:linear-gradient(180deg,#4a443b,#2a2622)}
+.phone::before{left:-2px;top:180px;height:52px;box-shadow:0 66px 0 #3a352e}
+.phone::after{right:-2px;top:214px;height:78px}
+
+.screen{
+  position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;
+  background:var(--paper);display:flex;flex-direction:column;
+  transition:background .5s var(--ease);
+}
+
+/* 灵动岛 */
+.island{
+  position:absolute;top:11px;left:50%;transform:translateX(-50%);z-index:30;
+  width:96px;height:26px;border-radius:14px;background:#0B0A09;
+}
+
+/* 状态栏 */
+.statusbar{
+  position:relative;z-index:20;flex:none;height:48px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;font-size:12px;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;letter-spacing:.02em;
+}
+.statusbar .sb-r{display:flex;align-items:center;gap:5px;opacity:.85}
+.sb-bat{width:20px;height:11px;border:1.3px solid currentColor;border-radius:3px;position:relative;opacity:.9}
+.sb-bat::after{content:"";position:absolute;right:-3.5px;top:3px;width:2px;height:5px;background:currentColor;border-radius:0 2px 2px 0}
+.sb-bat i{position:absolute;inset:1.5px;width:72%;background:currentColor;border-radius:1.5px}
+
+/* 视图容器 */
+.views{flex:1;position:relative;overflow:hidden}
+.view{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  padding:6px 20px 24px;
+  opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .32s var(--ease), transform .32s var(--ease), visibility .32s;
+  scrollbar-width:none;
+}
+.view::-webkit-scrollbar{display:none}
+.view.active{opacity:1;visibility:visible;transform:none}
+
+/* ---------- 待办页 ---------- */
+
+.greet{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.greet h1{
+  font-family:"LXGW WenKai","Kaiti SC","KaiTi","STKaiti",serif;
+  font-size:26px;font-weight:400;letter-spacing:.01em;line-height:1.25;
+}
+.greet h1 em{font-style:normal;font-size:15px;color:var(--ink-3);margin-left:7px;letter-spacing:.08em}
+.greet p{font-size:13px;color:var(--ink-2);margin-top:7px}
+.greet p b{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+
+.icon-btn{
+  width:36px;height:36px;flex:none;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink-2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s var(--spring), border-color .2s, color .2s, background .2s;
+}
+.icon-btn:hover{border-color:var(--ink-3);color:var(--ink);transform:translateY(-1px)}
+.icon-btn:active{transform:scale(.93)}
+
+/* 今日进度条 */
+.progress{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.progress-bar{flex:1;height:5px;border-radius:4px;background:var(--paper-2);overflow:hidden;position:relative}
+.progress-bar i{
+  display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--accent),#E08A4E);
+  width:0;transition:width .6s var(--ease);
+}
+.progress-txt{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;letter-spacing:.03em}
+.progress-txt b{color:var(--ink);font-weight:600}
+
+/* 抓取框 */
+.capture{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:15px 16px;margin-bottom:22px;
+  border-radius:16px;border:1px dashed var(--line);
+  background:var(--card);color:var(--ink-3);
+  font-family:inherit;font-size:14.5px;text-align:left;cursor:pointer;
+  transition:border-color .24s, box-shadow .24s, transform .2s var(--spring), background .24s;
+  box-shadow:var(--shadow-s);
+}
+.capture:hover{border-color:var(--ink-3);box-shadow:var(--shadow-m);transform:translateY(-2px)}
+.capture:active{transform:translateY(0) scale(.99)}
+.capture-ph{flex:1;font-family:"LXGW WenKai","Kaiti SC","KaiTi","STKaiti",serif;font-size:15.5px}
+.capture-tools{display:flex;align-items:center;gap:3px;color:var(--ink-3)}
+.capture-tools span{width:27px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:9px;transition:color .2s,background .2s}
+.capture-tools span:hover{color:var(--accent);background:rgba(194,65,12,.09)}
+
+/* 分组 */
+.group{margin-bottom:22px}
+.group-head{
+  display:flex;align-items:center;gap:7px;margin-bottom:9px;
+  font-size:11.5px;font-weight:600;color:var(--ink-3);
+  letter-spacing:.16em;
+}
+.group-head::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.group-n{font-variant-numeric:tabular-nums;letter-spacing:0}
+
+/* 列表 */
+.list{list-style:none;display:flex;flex-direction:column;gap:1px}
+
+.item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 12px 12px 10px;border-radius:13px;
+  position:relative;cursor:default;
+  transition:background .2s var(--ease);
+  animation:rise .5s var(--ease) both;animation-delay:calc(var(--i) * 45ms);
+}
+.item:hover{background:rgba(128,118,100,.07)}
+[data-theme="night"] .item:hover{background:rgba(255,255,255,.045)}
+
+/* 优先级左条 */
+.item::before{
+  content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:2.5px;height:0;border-radius:3px;background:var(--p-low);
+  transition:height .3s var(--ease), background .3s;
+}
+.item[data-prio="high"]::before{height:26px;background:var(--p-high)}
+.item[data-prio="mid"]::before{height:18px;background:var(--p-mid)}
+.item[data-prio="low"]::before{height:11px;background:var(--p-low)}
+
+/* 勾选框 */
+.box{
+  width:21px;height:21px;flex:none;margin-top:1px;
+  border-radius:6.5px;border:1.7px solid var(--line);
+  background:transparent;cursor:pointer;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .22s, background .22s, transform .22s var(--spring);
+}
+.box:hover{border-color:var(--ink-3)}
+.box:active{transform:scale(.86)}
+.box svg{width:14px;height:14px;overflow:visible}
+.box svg path{
+  fill:none;stroke:var(--card);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:22;stroke-dashoffset:22;
+  transition:stroke-dashoffset .3s var(--ease) .06s;
+}
+.item.done .box{border-color:var(--life);background:var(--life)}
+.item.done .box svg path{stroke-dashoffset:0}
+.item[data-prio="high"].done .box{border-color:var(--accent);background:var(--accent)}
+
+.item-body{flex:1;min-width:0}
+.item-title{
+  font-size:14.5px;line-height:1.5;color:var(--ink);position:relative;display:inline;
+  transition:color .3s var(--ease);
+}
+.item-title::after{
+  content:"";position:absolute;left:0;top:54%;height:1.2px;width:100%;
+  background:currentColor;opacity:.55;transform:scaleX(0);transform-origin:left;
+  transition:transform .36s var(--ease);
+}
+.item.done .item-title{color:var(--ink-3)}
+.item.done .item-title::after{transform:scaleX(1)}
+
+.item-meta{display:flex;align-items:center;gap:9px;margin-top:5px;font-size:11.5px;color:var(--ink-3)}
+.meta-tag{display:flex;align-items:center;gap:4px}
+.meta-tag i{width:6px;height:6px;border-radius:50%;display:block}
+.meta-due{display:flex;align-items:center;gap:3.5px}
+.item.done .item-meta{opacity:.5}
+
+/* 随手记条目 */
+.item.note .box{border:none;background:transparent;width:21px;color:var(--ink-3)}
+.item.note .box::after{
+  content:"";width:6px;height:6px;border-radius:50%;
+  background:var(--ink-3);opacity:.55;transition:transform .3s var(--spring);
+}
+.item.note:hover .box::after{transform:scale(1.4)}
+.item.note .box svg{display:none}
+.item.note .item-title{font-family:"LXGW WenKai","Kaiti SC","KaiTi","STKaiti",serif;font-size:15px;color:var(--ink-2)}
+
+.empty{
+  text-align:center;padding:34px 0;color:var(--ink-3);font-size:13px;
+  font-family:"LXGW WenKai","Kaiti SC","KaiTi","STKaiti",serif;
+}
+.empty span{display:block;font-size:26px;opacity:.32;margin-bottom:10px}
+
+/* ---------- 统计页 ---------- */
+
+.page-title{
+  font-family:"LXGW WenKai","Kaiti SC","KaiTi","STKaiti",serif;
+  font-size:24px;font-weight:400;margin-bottom:4px;
+}
+.page-sub{font-size:12.5px;color:var(--ink-3);margin-bottom:20px}
+
+.ring-card{
+  background:var(--card);border-radius:20px;padding:22px;
+  display:flex;align-items:center;gap:22px;margin-bottom:14px;
+  box-shadow:var(--shadow-m);border:1px solid var(--line-2);
+}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{transform:rotate(-90deg);display:block}
+.ring .track{fill:none;stroke:var(--paper-2);stroke-width:9}
+.ring .fill{
+  fill:none;stroke:url(#ringGrad);stroke-width:9;stroke-linecap:round;
+  stroke-dasharray:283;stroke-dashoffset:283;
+  transition:stroke-dashoffset 1.1s var(--ease) .25s;
+}
+.ring-label{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;
+}
+.ring-label b{font-size:25px;font-weight:300;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.ring-label b sup{font-size:12px;font-weight:400;opacity:.55;margin-left:1px}
+.ring-label span{font-size:10px;color:var(--ink-3);letter-spacing:.1em}
+
+.ring-facts{flex:1;display:flex;flex-direction:column;gap:11px}
+.fact{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--ink-2)}
+.fact b{font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.fact .u{font-size:11px;color:var(--ink-3)}
+
+/* 柱状图 */
+.bars-card{
+  background:var(--card);border-radius:20px;padding:20px 20px 16px;margin-bottom:14px;
+  box-shadow:var(--shadow-m);border:1px solid var(--line-2);
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-head h3{font-size:13.5px;font-weight:600;letter-spacing:.02em}
+.card-head span{font-size:11.5px;color:var(--ink-3)}
+.bars{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;height:112px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.bar{
+  width:100%;max-width:26px;border-radius:6px;
+  background:linear-gradient(180deg,rgba(63,94,140,.58),rgba(63,94,140,.30));
+  height:0;transition:height .85s var(--ease);
+  position:relative;
+}
+[data-theme="night"] .bar{background:linear-gradient(180deg,rgba(126,156,203,.62),rgba(126,156,203,.28))}
+.bar.today{background:linear-gradient(180deg,var(--accent),#E08A4E);box-shadow:0 0 0 4px rgba(194,65,12,.10)}
+.bar.future{background:var(--paper-2)}
+.bar-d{font-size:11px;color:var(--ink-3);letter-spacing:.04em}
+.bar-col.today .bar-d{color:var(--accent);font-weight:700}
+.bar-v{font-size:10px;color:var(--ink-3);font-variant-numeric:tabular-nums;opacity:0;transition:opacity .4s .7s}
+.bar-col:hover .bar-v{opacity:1}
+
+/* 标签分布 */
+.tag-rows{display:flex;flex-direction:column;gap:14px}
+.tag-row{display:flex;align-items:center;gap:12px}
+.tag-row .tn{font-size:12.5px;width:38px;flex:none;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.tag-row .tn i{width:7px;height:7px;border-radius:50%;flex:none}
+.tag-track{flex:1;height:7px;border-radius:5px;background:var(--paper-2);overflow:hidden}
+.tag-track i{display:block;height:100%;width:0;border-radius:5px;transition:width .9s var(--ease)}
+.tag-row .tp{font-size:11.5px;color:var(--ink-3);width:32px;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+
+/* 连续打卡 */
+.streak-card{
+  background:linear-gradient(135deg,rgba(194,65,12,.09),rgba(224,138,78,.05));
+  border:1px solid rgba(194,65,12,.20);border-radius:20px;padding:18px 20px;
+  display:flex;align-items:center;gap:14px;
+}
+.streak-flame{font-size:30px;line-height:1;filter:saturate(.85)}
+.streak-txt b{font-size:22px;font-weight:300;letter-spacing:-.02em;color:var(--accent);font-variant-numeric:tabular-nums}
+.streak-txt p{font-size:12px;color:var(--ink-2);margin-top:3px}
+
+/* ---------- 我的页 ---------- */
+
+.me-card{
+  background:var(--card);border-radius:20px;overflow:hidden;margin-bottom:14px;
+  box-shadow:var(--shadow-m);border:1px solid var(--line-2);
+}
+.me-row{
+  display:flex;align-items:center;gap:13px;padding:15px 17px;
+  border-bottom:1px solid var(--line-2);cursor:pointer;
+  transition:background .2s var(--ease);
+}
+.me-row:last-child{border-bottom:none}
+.me-row:hover{background:rgba(128,118,100,.06)}
+[data-theme="night"] .me-row:hover{background:rgba(255,255,255,.04)}
+.me-ico{
+  width:32px;height:32px;border-radius:10px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--paper-2);color:var(--ink-2);
+}
+.me-body{flex:1;min-width:0}
+.me-body h4{font-size:13.5px;font-weight:500;color:var(--ink)}
+.me-body p{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.me-val{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+
+/* 开关 */
+.switch{
+  width:40px;height:23px;border-radius:12px;background:var(--line);
+  position:relative;flex:none;cursor:pointer;border:none;
+  transition:background .26s var(--ease);
+}
+.switch::after{
+  content:"";position:absolute;top:2.5px;left:2.5px;
+  width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+  transition:transform .26s var(--spring);
+}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(17px)}
+
+.me-foot{
+  text-align:center;font-size:11px;color:var(--ink-3);padding:18px 0 6px;line-height:1.9;
+}
+.me-foot em{font-style:normal;font-family:"LXGW WenKai","Kaiti SC","KaiTi",serif}
+
+/* ---------- 底部导航 ---------- */
+
+.tabbar{
+  flex:none;height:68px;display:flex;align-items:center;
+  padding:0 22px 10px;gap:4px;
+  background:var(--paper);position:relative;z-index:15;
+  border-top:1px solid var(--line-2);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:none;cursor:pointer;font-family:inherit;
+  color:var(--ink-3);padding:8px 0 2px;position:relative;z-index:2;
+  transition:color .26s var(--ease);
+}
+.tab svg{width:21px;height:21px;transition:transform .34s var(--spring)}
+.tab span{font-size:10.5px;letter-spacing:.05em;font-weight:500}
+.tab.active{color:var(--accent)}
+.tab.active svg{transform:translateY(-1.5px) scale(1.06)}
+.tab:active svg{transform:scale(.88)}
+
+/* ---------- 新建面板 ---------- */
+
+.scrim{
+  position:absolute;inset:0;z-index:40;
+  background:rgba(20,18,15,.36);backdrop-filter:blur(3px);
+  opacity:0;visibility:hidden;transition:opacity .3s var(--ease), visibility .3s;
+}
+.scrim.open{opacity:1;visibility:visible}
+
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:41;
+  background:var(--paper);border-radius:26px 26px 36px 36px;
+  padding:10px 20px 22px;
+  transform:translateY(102%);transition:transform .42s var(--spring);
+  box-shadow:0 -20px 50px -24px rgba(28,26,23,.5);
+}
+.sheet.open{transform:none}
+.grabber{width:36px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 16px}
+
+.sheet-input{
+  width:100%;border:none;background:transparent;outline:none;resize:none;
+  font-family:"LXGW WenKai","Kaiti SC","KaiTi","STKaiti",serif;
+  font-size:19px;line-height:1.5;color:var(--ink);
+  padding:2px 0 12px;border-bottom:1px solid var(--line);
+}
+.sheet-input::placeholder{color:var(--ink-3);opacity:.65}
+
+.sheet-rows{display:flex;flex-direction:column;gap:13px;margin-top:16px}
+.row{display:flex;align-items:center;gap:10px}
+.row-label{font-size:11.5px;color:var(--ink-3);width:42px;flex:none;letter-spacing:.08em}
+
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:20px;cursor:pointer;
+  font-family:inherit;font-size:12.5px;
+  border:1px solid var(--line);background:transparent;color:var(--ink-2);
+  transition:all .22s var(--ease);
+}
+.chip i{width:7px;height:7px;border-radius:50%;display:block}
+.chip:hover{border-color:var(--ink-3)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip.on i{box-shadow:0 0 0 1.5px rgba(255,255,255,.35)}
+
+.tool{
+  display:flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--line);background:transparent;color:var(--ink-2);
+  transition:all .22s var(--ease);
+}
+.tool:hover{border-color:var(--ink-3);color:var(--ink)}
+.tool.rec{background:var(--accent);border-color:var(--accent);color:#fff;animation:pulse 1.15s infinite}
+
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(194,65,12,.42)}
+  50%{box-shadow:0 0 0 9px rgba(194,65,12,0)}
+}
+
+.sheet-actions{display:flex;gap:9px;margin-top:20px}
+.btn{
+  flex:1;padding:13px 16px;border-radius:14px;cursor:pointer;
+  font-family:inherit;font-size:13.5px;font-weight:500;
+  border:1px solid var(--line);background:transparent;color:var(--ink-2);
+  transition:all .22s var(--ease);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--paper);flex:1.35}
+.btn.primary:hover{opacity:.88;color:var(--paper)}
+.btn:active{transform:scale(.975)}
+
+/* 提示条 */
+.toast{
+  position:absolute;left:50%;bottom:96px;transform:translate(-50%,14px);
+  z-index:60;pointer-events:none;
+  background:var(--ink);color:var(--paper);
+  font-size:12.5px;padding:10px 18px;border-radius:20px;
+  opacity:0;transition:opacity .3s var(--ease), transform .3s var(--spring);
+  white-space:nowrap;box-shadow:0 12px 30px -12px rgba(0,0,0,.5);
+  display:flex;align-items:center;gap:7px;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@keyframes rise{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:none}
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width:1100px){
+  .stage{gap:44px}
+}
+@media (max-width:940px){
+  body{padding:24px 16px}
+  .stage{flex-direction:column;gap:34px}
+  .phone{width:100%;max-width:382px;height:730px}
+  .desk{width:100%;max-width:382px}
+  .desk-scene{height:auto;padding-bottom:26px}
+}
+@media (max-width:420px){
+  body{padding:0}
+  .stage{gap:0}
+  .phone{width:100%;max-width:none;height:100vh;height:100dvh;border-radius:0;padding:0}
+  .screen{border-radius:0}
+  .island{display:none}
+  .statusbar{height:38px}
+  .desk{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ============ 桌面服务卡片 ============ -->
+  <aside class="desk">
+    <div class="desk-scene">
+      <div class="desk-clock">
+        <div class="t" id="deskTime">9:41</div>
+        <div class="d" id="deskDate">9月24日 星期四</div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-head">
+          <span class="widget-title">今日待办</span>
+          <span class="widget-count"><b id="wDone">0</b>/<span id="wTotal">0</span></span>
+        </div>
+        <ul class="widget-list" id="wList"></ul>
+        <div class="widget-foot">
+          <button class="wf-btn" onclick="openSheet()">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 4.5v11M4.5 10h11"/></svg>
+            记一笔
+          </button>
+          <span class="wf-btn" style="cursor:default;opacity:.55">长按可换尺寸</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="desk-hint">
+      <b>鸿蒙桌面服务卡片</b><br>
+      点卡片上的方框 —— 右边手机里的列表会<b>实时同步</b>。免开 App 直接打卡。
+    </p>
+  </aside>
+
+  <!-- ============ 手机 ============ -->
+  <main class="phone">
+    <div class="island"></div>
+    <div class="screen">
+
+      <div class="statusbar">
+        <span id="statusTime">9:41</span>
+        <span class="sb-r">
+          <svg width="15" height="11" viewBox="0 0 20 14" fill="currentColor"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/><rect x="10" y="4" width="3" height="10" rx="1"/><rect x="15" y="1" width="3" height="13" rx="1" opacity=".35"/></svg>
+          <span class="sb-bat"><i></i></span>
+        </span>
+      </div>
+
+      <div class="views">
+
+        <!-- ---------- 待办 ---------- -->
+        <section class="view active" id="v-todo">
+          <div class="greet">
+            <div>
+              <h1 id="greetDate">9月24日 <em>星期四</em></h1>
+              <p id="greetSub">今天有 <b>4</b> 件事等着你</p>
+            </div>
+            <button class="icon-btn" id="themeBtn" title="日间 / 夜记">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                <path d="M10 2.6v1.6M10 15.8v1.6M17.4 10h-1.6M4.2 10H2.6M15.2 4.8l-1.1 1.1M5.9 14.1l-1.1 1.1M15.2 15.2l-1.1-1.1M5.9 5.9L4.8 4.8"/>
+                <circle cx="10" cy="10" r="3.1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="progress">
+            <div class="progress-bar"><i id="progFill"></i></div>
+            <span class="progress-txt"><b id="progDone">0</b>/<span id="progTotal">0</span></span>
+          </div>
+
+          <button class="capture" onclick="openSheet()">
+            <span class="capture-ph">记点什么…</span>
+            <span class="capture-tools">
+              <span title="语音转文字">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M10 2.6a2.9 2.9 0 0 1 2.9 2.9v4.2a2.9 2.9 0 0 1-5.8 0V5.5A2.9 2.9 0 0 1 10 2.6z"/><path d="M4.6 9.6a5.4 5.4 0 0 0 10.8 0M10 15v2.6"/></svg>
+              </span>
+              <span title="添加图片">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="4" width="14.4" height="12" rx="2.6"/><circle cx="7.4" cy="8.4" r="1.4"/><path d="M3.4 14.2l3.9-3.8 3.3 3.2 2.4-2 3.6 3.4"/></svg>
+              </span>
+              <span title="彩色标签">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3.4 9.1V4.4a1 1 0 0 1 1-1h4.7a1 1 0 0 1 .7.3l6.3 6.3a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 0 1-1.4 0L3.7 9.8a1 1 0 0 1-.3-.7z"/><circle cx="7" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>
+              </span>
+            </span>
+          </button>
+
+          <div class="group">
+            <div class="group-head"><span>待办</span><span class="group-n" id="todoCount">0</span></div>
+            <ul class="list" id="todoList"></ul>
+          </div>
+
+          <div class="group">
+            <div class="group-head"><span>随手记</span><span class="group-n" id="noteCount">0</span></div>
+            <ul class="list" id="noteList"></ul>
+          </div>
+        </section>
+
+        <!-- ---------- 统计 ---------- -->
+        <section class="view" id="v-stats">
+          <h2 class="page-title">这一周</h2>
+          <p class="page-sub" id="weekRange">9月22日 — 9月28日</p>
+
+          <div class="ring-card">
+            <div class="ring">
+              <svg width="104" height="104" viewBox="0 0 104 104">
+                <defs>
+                  <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#C2410C"/>
+                    <stop offset="100%" stop-color="#E0A04E"/>
+                  </linearGradient>
+                </defs>
+                <circle class="track" cx="52" cy="52" r="45"/>
+                <circle class="fill" id="ringFill" cx="52" cy="52" r="45"/>
+              </svg>
+              <div class="ring-label">
+                <b id="ringPct">0<sup>%</sup></b>
+                <span>完成度</span>
+              </div>
+            </div>
+            <div class="ring-facts">
+              <div class="fact"><b id="fDone">21</b><span class="u">件已完成</span></div>
+              <div class="fact"><b id="fStreak">12</b><span class="u">天连续打卡</span></div>
+              <div class="fact"><b id="fFocus">1.8</b><span class="u">小时日均专注</span></div>
+            </div>
+          </div>
+
+          <div class="bars-card">
+            <div class="card-head">
+              <h3>每日完成</h3>
+              <span id="barsTotal">本周共 21 件</span>
+            </div>
+            <div class="bars" id="bars"></div>
+          </div>
+
+          <div class="bars-card">
+            <div class="card-head">
+              <h3>标签分布</h3>
+              <span>按完成件数</span>
+            </div>
+            <div class="tag-rows" id="tagRows"></div>
+          </div>
+
+          <div class="streak-card">
+            <div class="streak-flame">🔥</div>
+            <div class="streak-txt">
+              <b id="streakBig">12 天</b>
+              <p>再坚持 2 天就破你自己的纪录了</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- 我的 ---------- -->
+        <section class="view" id="v-me">
+          <h2 class="page-title">我的</h2>
+          <p class="page-sub">标签、提醒与卡片设置</p>
+
+          <div class="me-card">
+            <div class="me-row" onclick="toast('彩色标签 · 演示占位')">
+              <div class="me-ico">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3.4 9.1V4.4a1 1 0 0 1 1-1h4.7a1 1 0 0 1 .7.3l6.3 6.3a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 0 1-1.4 0L3.7 9.8a1 1 0 0 1-.3-.7z"/><circle cx="7" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>
+              </div>
+              <div class="me-body"><h4>彩色标签</h4><p>学习 · 工作 · 生活</p></div>
+              <span class="me-val" id="tagSummary"></span>
+            </div>
+
+            <div class="me-row" onclick="toast('代理提醒 · 演示占位')">
+              <div class="me-ico">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.2a4 4 0 1 1 8 0c0 3 1.2 4.6 1.2 4.6H4.8S6 11.2 6 8.2z"/><path d="M8.5 15.4a1.7 1.7 0 0 0 3 0"/></svg>
+              </div>
+              <div class="me-body"><h4>代理提醒</h4><p>到点拉起通知栏</p></div>
+              <button class="switch" aria-checked="true" onclick="event.stopPropagation();toggleSwitch(this)"></button>
+            </div>
+
+            <div class="me-row" onclick="toast('卡片尺寸 · 演示占位')">
+              <div class="me-ico">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="2.8" y="2.8" width="6.2" height="6.2" rx="1.6"/><rect x="11" y="2.8" width="6.2" height="6.2" rx="1.6"/><rect x="2.8" y="11" width="6.2" height="6.2" rx="1.6"/><rect x="11" y="11" width="6.2" height="6.2" rx="1.6"/></svg>
+              </div>
+              <div class="me-body"><h4>桌面卡片</h4><p>2×2 / 2×4 两种尺寸</p></div>
+              <span class="me-val">2×4
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l5 5-5 5"/></svg>
+              </span>
+            </div>
+
+            <div class="me-row" onclick="toast('语音识别 · 演示占位')">
+              <div class="me-ico">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M10 2.6a2.9 2.9 0 0 1 2.9 2.9v4.2a2.9 2.9 0 0 1-5.8 0V5.5A2.9 2.9 0 0 1 10 2.6z"/><path d="M4.6 9.6a5.4 5.4 0 0 0 10.8 0M10 15v2.6"/></svg>
+              </div>
+              <div class="me-body"><h4>语音识别</h4><p>普通话 · 转写后可直接编辑</p></div>
+              <button class="switch" aria-checked="true" onclick="event.stopPropagation();toggleSwitch(this)"></button>
+            </div>
+
+            <div class="me-row" onclick="toast('数据存储 · 演示占位')">
+              <div class="me-ico">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="10" cy="5.2" rx="6.2" ry="2.6"/><path d="M3.8 5.2v9.6c0 1.4 2.8 2.6 6.2 2.6s6.2-1.2 6.2-2.6V5.2"/><path d="M3.8 10c0 1.4 2.8 2.6 6.2 2.6s6.2-1.2 6.2-2.6"/></svg>
+              </div>
+              <div class="me-body"><h4>数据存储</h4><p>全部留在本机,不上云</p></div>
+              <span class="me-val">本地
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l5 5-5 5"/></svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="me-foot">
+            <em>极简小记</em> · 交互原型 v0.1<br>
+            图中数据为演示用合成数据
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ---------- 底部导航 ---------- -->
+      <nav class="tabbar">
+        <button class="tab active" data-tab="todo" onclick="switchTab('todo',this)">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3.4" width="14" height="13.2" rx="2.8"/><path d="M6.8 10.2l2.2 2.2 4.4-4.6"/>
+          </svg>
+          <span>待办</span>
+        </button>
+        <button class="tab" data-tab="stats" onclick="switchTab('stats',this)">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4.2 16.4V11M8.7 16.4V4.6M13.2 16.4v-4.2M17.7 16.4V8.2"/>
+          </svg>
+          <span>统计</span>
+        </button>
+        <button class="tab" data-tab="me" onclick="switchTab('me',this)">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="7" r="3.3"/><path d="M4 16.6a6.1 6.1 0 0 1 12 0"/></svg>
+          <span>我的</span>
+        </button>
+      </nav>
+
+      <!-- ---------- 新建面板 ---------- -->
+      <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+
+      <div class="sheet" id="sheet">
+        <div class="grabber"></div>
+
+        <textarea class="sheet-input" id="sheetInput" rows="1" placeholder="记点什么…"></textarea>
+
+        <div class="sheet-rows">
+          <div class="row">
+            <span class="row-label">标签</span>
+            <div class="chips" id="tagChips"></div>
+          </div>
+
+          <div class="row">
+            <span class="row-label">优先级</span>
+            <div class="chips" id="prioChips"></div>
+          </div>
+
+          <div class="row">
+            <span class="row-label">添加</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="tool" id="micBtn" title="语音转文字">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M10 2.6a2.9 2.9 0 0 1 2.9 2.9v4.2a2.9 2.9 0 0 1-5.8 0V5.5A2.9 2.9 0 0 1 10 2.6z"/><path d="M4.6 9.6a5.4 5.4 0 0 0 10.8 0M10 15v2.6"/></svg>
+              </button>
+              <button class="tool" onclick="toast('图片选择 · 演示占位')" title="添加图片">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="4" width="14.4" height="12" rx="2.6"/><circle cx="7.4" cy="8.4" r="1.4"/><path d="M3.4 14.2l3.9-3.8 3.3 3.2 2.4-2 3.6 3.4"/></svg>
+              </button>
+              <button class="tool" id="bellBtn" onclick="cycleDue()" title="提醒时间">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.2a4 4 0 1 1 8 0c0 3 1.2 4.6 1.2 4.6H4.8S6 11.2 6 8.2z"/><path d="M8.5 15.4a1.7 1.7 0 0 0 3 0"/></svg>
+              </button>
+              <span id="dueLabel" style="font-size:11.5px;color:var(--ink-2);white-space:nowrap">不提醒</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sheet-actions">
+          <button class="btn" onclick="submit('note')">只存为备忘</button>
+          <button class="btn primary" onclick="submit('todo')">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>
+            记为待办
+          </button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   数据层 —— 统一"条目"模型
+   所有东西都是 Item;kind='todo' 参与勾选与统计,kind='note' 不参与。
+   ============================================================ */
+
+const TAGS = {
+  '学习': 'var(--study)',
+  '工作': 'var(--work)',
+  '生活': 'var(--life)'
+};
+
+const PRIOS = {
+  high: { label:'高', color:'var(--p-high)' },
+  mid:  { label:'中', color:'var(--p-mid)'  },
+  low:  { label:'低', color:'var(--p-low)'  }
+};
+
+let seq = 100;
+
+const items = [
+  { id:++seq, kind:'todo', title:'完成第三章读书笔记', tag:'学习', prio:'high', due:'21:00', done:false },
+  { id:++seq, kind:'todo', title:'回复产品评审邮件',   tag:'工作', prio:'mid',  due:null,    done:true  },
+  { id:++seq, kind:'todo', title:'背 50 个单词',       tag:'学习', prio:'mid',  due:null,    done:false },
+  { id:++seq, kind:'todo', title:'买牛奶和鸡蛋',       tag:'生活', prio:'low',  due:null,    done:false },
+  { id:++seq, kind:'todo', title:'整理上周会议纪要',   tag:'工作', prio:'low',  due:null,    done:true  },
+  { id:++seq, kind:'note', title:'灵感:统计页可以做成习惯日历,一眼看到断更的位置', tag:'学习', prio:null, due:null, done:false },
+  { id:++seq, kind:'note', title:'同事推荐的那本《深度工作》,周末去图书馆借',       tag:'生活', prio:null, due:null, done:false }
+];
+
+/* 本周历史(合成数据):周一 → 周日 */
+const WEEK_SEED = [3, 5, 2, 4, 6, 1, 2];
+const TODAY_IDX = (new Date().getDay() + 6) % 7;   // 0 = 周一
+
+/* ============================================================
+   渲染
+   ============================================================ */
+
+const $ = s => document.querySelector(s);
+
+function todos(){ return items.filter(i => i.kind === 'todo'); }
+function notes(){ return items.filter(i => i.kind === 'note'); }
+function doneCount(){ return todos().filter(i => i.done).length; }
+
+const ICON = {
+  check: '<svg viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>',
+  bell : '<svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.2a4 4 0 1 1 8 0c0 3 1.2 4.6 1.2 4.6H4.8S6 11.2 6 8.2z"/><path d="M8.5 15.4a1.7 1.7 0 0 0 3 0"/></svg>'
+};
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- 待办列表 ---------- */
+
+function renderTodo(){
+  const order = { high:0, mid:1, low:2 };
+  const ts = todos().slice().sort((a,b) => (a.done - b.done) || (order[a.prio] - order[b.prio]));
+
+  $('#todoList').innerHTML = ts.length ? ts.map((it, i) => `
+    <li class="item ${it.done ? 'done' : ''}" data-prio="${it.prio}" data-id="${it.id}" style="--i:${i}">
+      <button class="box" onclick="toggle(${it.id})" aria-label="打卡">${ICON.check}</button>
+      <div class="item-body">
+        <div class="item-title">${esc(it.title)}</div>
+        <div class="item-meta">
+          <span class="meta-tag"><i style="background:${TAGS[it.tag]}"></i>${it.tag}</span>
+          ${it.due ? `<span class="meta-due">${ICON.bell}${esc(it.due)}</span>` : ''}
+        </div>
+      </div>
+    </li>`).join('')
+    : `<li class="empty"><span>✓</span>今天清空了</li>`;
+
+  const ns = notes();
+  $('#noteList').innerHTML = ns.length ? ns.map((it, i) => `
+    <li class="item note" data-id="${it.id}" style="--i:${i}">
+      <button class="box" onclick="openSheet()" aria-label="备忘"></button>
+      <div class="item-body">
+        <div class="item-title">${esc(it.title)}</div>
+      </div>
+    </li>`).join('')
+    : `<li class="empty"><span>✎</span>还没有随手记</li>`;
+
+  $('#todoCount').textContent = ts.length;
+  $('#noteCount').textContent = ns.length;
+
+  const d = doneCount(), t = todos().length;
+  $('#progDone').textContent  = d;
+  $('#progTotal').textContent = t;
+  $('#progFill').style.width  = (t ? d / t * 100 : 0) + '%';
+
+  const left = t - d;
+  $('#greetSub').innerHTML = left > 0
+    ? `今天有 <b>${left}</b> 件事等着你`
+    : `<b>全部完成</b> 今天很干净`;
+
+  renderWidget();
+  renderStats();
+}
+
+/* ---------- 桌面服务卡片 ---------- */
+
+function renderWidget(){
+  const pending = todos().filter(i => !i.done);
+  const shown = pending.length ? pending : todos();
+  const wbox = ICON.check.replace('<svg', '<svg width="11" height="11"');
+
+  $('#wList').innerHTML = shown.slice(0, 4).map(it => `
+    <li class="witem ${it.done ? 'done' : ''}" onclick="toggle(${it.id})">
+      <span class="wdot" style="background:${TAGS[it.tag]}"></span>
+      <span class="wt">${esc(it.title)}</span>
+      <span class="wbox">${wbox}</span>
+    </li>`).join('');
+
+  $('#wDone').textContent  = doneCount();
+  $('#wTotal').textContent = todos().length;
+}
+
+/* ---------- 统计 ---------- */
+
+function renderStats(){
+  const seed = WEEK_SEED.map((n, i) => i > TODAY_IDX ? 0 : n);
+  seed[TODAY_IDX] = doneCount();
+
+  const weekTotal = seed.reduce((a,b) => a + b, 0);
+  const planned   = WEEK_SEED.reduce((a,b) => a + b, 0);
+  const pct       = planned ? Math.round(weekTotal / planned * 100) : 0;
+
+  $('#ringPct').innerHTML = `${pct}<sup>%</sup>`;
+  $('#ringFill').style.strokeDashoffset = 283 - 283 * Math.min(pct, 100) / 100;
+
+  $('#fDone').textContent     = weekTotal;
+  $('#barsTotal').textContent = `本周共 ${weekTotal} 件`;
+
+  const dayNames = ['一','二','三','四','五','六','日'];
+  const max = Math.max(...seed, 1);
+
+  $('#bars').innerHTML = seed.map((n, i) => {
+    const h   = n / max * 100;
+    const cls = i === TODAY_IDX ? 'today' : (i > TODAY_IDX ? 'future' : '');
+    return `
+      <div class="bar-col ${i === TODAY_IDX ? 'today' : ''}">
+        <span class="bar-v">${n}</span>
+        <div class="bar ${cls}" data-h="${h}"></div>
+        <span class="bar-d">${dayNames[i]}</span>
+      </div>`;
+  }).join('');
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.bar[data-h]').forEach((b, i) => {
+      setTimeout(() => { b.style.height = Math.max(parseFloat(b.dataset.h), 3) + '%'; }, i * 55);
+    });
+  });
+
+  const keys = Object.keys(TAGS);
+  const dist = {};
+  keys.forEach(k => { dist[k] = todos().filter(i => i.done && i.tag === k).length; });
+  const base = weekTotal / 3;
+  const totals = keys.map(k => dist[k] + base);
+  const sum = totals.reduce((a,b) => a + b, 0) || 1;
+
+  $('#tagRows').innerHTML = keys.map((k, i) => {
+    const p = Math.round(totals[i] / sum * 100);
+    return `
+      <div class="tag-row">
+        <span class="tn"><i style="background:${TAGS[k]}"></i>${k}</span>
+        <span class="tag-track"><i data-w="${p}" style="background:${TAGS[k]}"></i></span>
+        <span class="tp">${p}%</span>
+      </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    document.querySelectorAll('.tag-track i[data-w]').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 120);
+
+  $('#tagSummary').textContent = keys.length + ' 个';
+}
+
+/* ---------- 交互 ---------- */
+
+function toggle(id){
+  const it = items.find(i => i.id === id);
+  if (!it || it.kind !== 'todo') return;
+  it.done = !it.done;
+  renderTodo();
+  if (it.done){
+    const t = it.title.length > 10 ? it.title.slice(0, 10) + '…' : it.title;
+    toast(`已完成 · ${esc(t)}`);
+  }
+}
+
+function switchTab(name, el){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $('#v-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  moveIndicator(el);
+}
+
+function moveIndicator(el){
+  const bar = document.querySelector('.tabbar');
+  const r = el.getBoundingClientRect(), br = bar.getBoundingClientRect();
+  const pill = bar.querySelector('.pill');
+  if (!pill) return;
+  pill.style.width = '34px';
+  pill.style.left  = (r.left - br.left + r.width / 2 - 17) + 'px';
+}
+
+/* ---------- 新建面板 ---------- */
+
+let draft = { tag:'学习', prio:'mid', due:null };
+
+const DUE_CYCLE = [null, '今天 20:00', '明天 09:00', '周六 10:00'];
+
+function openSheet(){
+  $('#scrim').classList.add('open');
+  $('#sheet').classList.add('open');
+  setTimeout(() => $('#sheetInput').focus(), 260);
+}
+
+function closeSheet(){
+  $('#scrim').classList.remove('open');
+  $('#sheet').classList.remove('open');
+  $('#sheetInput').value = '';
+  $('#sheetInput').style.height = 'auto';
+  $('#micBtn').classList.remove('rec');
+  draft.due = null;
+  $('#dueLabel').textContent = '不提醒';
+  $('#bellBtn').style.color = '';
+  $('#bellBtn').style.borderColor = '';
+}
+
+function buildChips(){
+  $('#tagChips').innerHTML = Object.keys(TAGS).map(k => `
+    <button class="chip ${draft.tag === k ? 'on' : ''}" onclick="pickTag('${k}')">
+      <i style="background:${TAGS[k]}"></i>${k}
+    </button>`).join('');
+
+  $('#prioChips').innerHTML = Object.entries(PRIOS).map(([k, v]) => `
+    <button class="chip ${draft.prio === k ? 'on' : ''}" onclick="pickPrio('${k}')">
+      <i style="background:${v.color}"></i>${v.label}
+    </button>`).join('');
+}
+
+function pickTag(k){ draft.tag = k; buildChips(); }
+function pickPrio(k){ draft.prio = (draft.prio === k) ? null : k; buildChips(); }
+
+function cycleDue(){
+  const i = DUE_CYCLE.indexOf(draft.due);
+  draft.due = DUE_CYCLE[(i + 1) % DUE_CYCLE.length];
+  $('#dueLabel').textContent = draft.due || '不提醒';
+  $('#bellBtn').style.color       = draft.due ? 'var(--accent)' : '';
+  $('#bellBtn').style.borderColor = draft.due ? 'var(--accent)' : '';
+}
+
+function submit(kind){
+  const v = $('#sheetInput').value.trim();
+  if (!v){ toast('先写点什么'); $('#sheetInput').focus(); return; }
+
+  items.unshift({
+    id: ++seq,
+    kind,
+    title: v,
+    tag:  draft.tag,
+    prio: kind === 'todo' ? (draft.prio || 'low') : null,
+    due:  kind === 'todo' ? draft.due : null,
+    done: false
+  });
+
+  closeSheet();
+  renderTodo();
+  toast(kind === 'todo' ? '已记为待办' : '已存为备忘');
+}
+
+/* ---------- 语音(演示) ---------- */
+
+$('#micBtn').addEventListener('click', () => {
+  const btn = $('#micBtn');
+  if (btn.classList.contains('rec')) return;
+  btn.classList.add('rec');
+
+  const ta = $('#sheetInput');
+  const sample = '周五下班前去取快递,顺便买瓶洗发水';
+  ta.value = '';
+  let i = 0;
+  const timer = setInterval(() => {
+    ta.value = sample.slice(0, ++i);
+    if (i >= sample.length){
+      clearInterval(timer);
+      btn.classList.remove('rec');
+      toast('语音已转文字,可直接编辑');
+    }
+  }, 55);
+});
+
+/* ---------- 杂项 ---------- */
+
+function toggleSwitch(el){
+  el.setAttribute('aria-checked', el.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+}
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1900);
+}
+
+$('#themeBtn').addEventListener('click', () => {
+  const root = document.documentElement;
+  const night = root.dataset.theme === 'night';
+  root.dataset.theme = night ? 'day' : 'night';
+  toast(night ? '切换到日间' : '切换到夜记');
+});
+
+$('#sheetInput').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+/* ---------- 日期与时钟 ---------- */
+
+const pad = n => String(n).padStart(2, '0');
+
+function paintDates(){
+  const d  = new Date();
+  const wd = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][d.getDay()];
+  const md = `${d.getMonth() + 1}月${d.getDate()}日`;
+
+  $('#greetDate').innerHTML  = `${md} <em>${wd}</em>`;
+  $('#deskDate').textContent = `${md} ${wd}`;
+
+  const mon = new Date(d);   mon.setDate(d.getDate() - TODAY_IDX);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  $('#weekRange').textContent =
+    `${mon.getMonth()+1}月${mon.getDate()}日 — ${sun.getMonth()+1}月${sun.getDate()}日`;
+}
+
+function tick(){
+  const d = new Date();
+  const s = `${d.getHours()}:${pad(d.getMinutes())}`;
+  $('#statusTime').textContent = s;
+  $('#deskTime').textContent   = s;
+}
+
+/* ---------- 启动 ---------- */
+
+// 底部导航的滑动指示块
+(function initIndicator(){
+  const bar = document.querySelector('.tabbar');
+  const pill = document.createElement('i');
+  pill.className = 'pill';
+  pill.style.cssText =
+    'position:absolute;top:8px;height:34px;border-radius:12px;background:rgba(194,65,12,.09);' +
+    'transition:left .38s cubic-bezier(.34,1.32,.44,1), width .38s cubic-bezier(.34,1.32,.44,1);' +
+    'pointer-events:none;z-index:1';
+  bar.appendChild(pill);
+})();
+
+buildChips();
+paintDates();
+tick();
+setInterval(tick, 20000);
+renderTodo();
+
+requestAnimationFrame(() => moveIndicator(document.querySelector('.tab.active')));
+</script>
+</body>
+</html>
