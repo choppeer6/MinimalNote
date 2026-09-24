@@ -12,10 +12,23 @@
 |---|---|
 | `prototype/index.html` | **可点击交互原型 v0.1** —— 单文件、零依赖、零构建 |
 | `docs/superpowers/specs/2026-09-24-minimalnote-design.md` | 设计文档:决策、数据模型、鸿蒙技术映射、未决问题 |
-| `docs/superpowers/plans/2026-09-24-harmonyos-toolchain-setup.md` | **工具链部署计划** —— 装 DevEco Studio 的完整步骤 |
-| `docs/superpowers/plans/2026-09-24-minimalnote-m1-data-layer.md` | **M1 实现计划** —— 数据层:A 部分纯 TS(今天可跑),B 部分 ArkTS/RDB |
+| `core/` + `tests/` | **数据层纯逻辑核心** —— 零鸿蒙依赖,71 项 vitest 测试全绿 |
+| `docs/superpowers/plans/2026-09-24-harmonyos-toolchain-setup.md` | **工具链部署计划(命令行版)** —— 装 Command Line Tools,不用装 IDE,磁盘门槛约 12 GB |
+| `docs/superpowers/plans/2026-09-24-minimalnote-m1-data-layer.md` | **M1 实现计划** —— 数据层:A 部分纯 TS(已完成),B 部分 ArkTS/RDB |
 
-> 鸿蒙 ArkTS 工程尚未开始。**M1 的 A 部分(纯 TypeScript 领域核心 + vitest 测试)不依赖鸿蒙工具链,可立即执行;B 部分需要先按工具链计划装好 DevEco Studio。**
+> 鸿蒙 ArkTS 工程尚未开始。**M1 的 A 部分(纯 TypeScript 领域核心 + vitest 测试)已完成并验证,不依赖鸿蒙工具链;B 部分需要先按工具链计划装好 Command Line Tools。**
+
+## 跑一下测试
+
+A 部分是纯 TypeScript,不需要任何鸿蒙工具链:
+
+```bash
+npm install
+npm test          # 71 项全绿
+npm run typecheck # 无输出即通过
+```
+
+验证的是统计口径与日期归属这两块最容易出错、且出错最难发现的逻辑 —— 比如「本周完成度」的分母到底该按什么算。
 
 ## 跑一下原型
 
