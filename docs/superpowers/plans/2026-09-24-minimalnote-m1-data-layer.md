@@ -455,7 +455,7 @@ export function isAfterKey(a: string, b: string): boolean {
 - [ ] **Step 4: 跑测试,确认通过**
 
 Run: `npx vitest run tests/date.test.ts`
-Expected: PASS,`19 passed`
+Expected: PASS,`21 passed`
 
 - [ ] **Step 5: 类型检查**
 
@@ -1121,12 +1121,12 @@ export function streakOf(items: Item[], anchorISO: string): number {
 - [ ] **Step 4: 跑测试,确认通过**
 
 Run: `npx vitest run tests/stats.test.ts`
-Expected: PASS,`23 passed`
+Expected: PASS,`26 passed`
 
 - [ ] **Step 5: 跑全量测试**
 
 Run: `npm test`
-Expected: PASS,`59 passed`(smoke 1 + date 19 + item 16 + stats 23)
+Expected: PASS,`64 passed`(smoke 1 + date 21 + item 16 + stats 26) —— Task 5 再加 7 项,最终 71 项
 
 - [ ] **Step 6: 类型检查**
 
@@ -1590,7 +1590,7 @@ git commit -m "feat(stats): 统计页接入真实数据源" -m "Co-Authored-By: 
 
 ## M1 完成标准
 
-- [ ] `npm test` 全绿(59 项)
+- [ ] `npm test` 全绿(71 项)
 - [ ] `npm run typecheck` 无输出
 - [ ] DevEco 工程能构建出 HAP
 - [ ] 真机上新建 / 勾选 / 删除待办,重启 App 后数据仍在
@@ -1606,3 +1606,19 @@ git commit -m "feat(stats): 统计页接入真实数据源" -m "Co-Authored-By: 
 | 语音识别离线/在线与方言支持 | U6 → M6 |
 | App 被杀死后提醒是否仍触发 | U7 → M4 |
 | 里程碑时间线、人力估算、风险清单 | 本计划不含 —— 需要的话另出一份排期文档 |
+
+## 执行记录(A 部分,2026-09-24)
+
+A 部分(Task 0–5)已执行完毕,`npm test` 71 项全绿、`npm run typecheck` 退出码 0,分 6 次提交落在 `feat/m1-data-layer` 分支上。
+
+执行中与本计划的偏差,记录在此以免后人对着计划困惑:
+
+1. **测试数对不上。** 本计划原写 59 项(smoke 1 + date 19 + item 16 + stats 23),实际 71 项。写计划时数错了 date(实为 21)和 stats(实为 26),又漏算了 Task 5 的 fixture(7 项)。上文相关行已按实测改正。计划里的数字是估算,以 `npm test` 的真实输出为准。
+
+2. **`weekRatio` 有一项测试是错的,实现是对的。** 原计划里的「完成 2 项、计划 4 项 → 0.5」用 `doneTodo()` 造已完成条目,而 `doneTodo()` 不设 `due`。按 U4 口径,无 `due` 的待办不进分母,于是 `weekPlanned` 实际是 2 而非 4,比率算出 1。旁边的「全部完成 → 1」也因同样原因**侥幸**通过 —— 它根本没验证到想验证的东西。
+
+   修法是把四条都补上落在本周的 `due`,让分母真的等于 4;并且把这个理由写进测试注释,免得以后有人又照原样"简化"回去。
+
+   这正是 A/B 拆分的价值所在:一个统计语义的错,443 ms 的纯 TypeScript 测试就抓出来了,全程不需要鸿蒙工具链。若等到 ArkTS 阶段再发现,排查成本高一个数量级。
+
+3. **工具链版本比计划里新。** 实装 TypeScript 7.0.2、vitest 5.0.1、@types/node 26.6.2,计划里写的是 5.x / 2.x。无影响。
